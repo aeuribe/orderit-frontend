@@ -100,7 +100,7 @@ function LoginForm() {
             }}
           >
             <img
-              src="src/assets/logo.png"
+              src={"src/assets/logo.png"}
               alt="Orderit Logo"
               style={{
                 width: "100%", // Hace que la imagen sea responsive
