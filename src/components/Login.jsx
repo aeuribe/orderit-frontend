@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../styles/login.css";
+import iconLogo from '../assets/logo.png';
 import {
   Button,
   TextField,
@@ -100,7 +101,7 @@ function LoginForm() {
             }}
           >
             <img
-              src={"src/assets/logo.png"}
+              src={iconLogo}
               alt="Orderit Logo"
               style={{
                 width: "100%", // Hace que la imagen sea responsive
