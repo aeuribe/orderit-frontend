@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "../styles/login.css";
-import iconLogo from '../assets/logo.png';
+import iconLogo from "../assets/logo.png";
+import loginService from "../services/login.js";
+import { jwtDecode } from 'jwt-decode'
 import {
   Button,
   TextField,
@@ -66,7 +68,7 @@ const CustomButton = styled(Button)({
   marginTop: "2rem",
   "&:hover": {
     backgroundColor: "#3A3AEE", // Color de fondo al pasar el ratón (más oscuro que el color principal)
-  }
+  },
 });
 
 const WelcomeText = styled(Typography)({
@@ -84,10 +86,44 @@ const CustomLink = styled(Link)({
 
 function LoginForm() {
   const [checked, setChecked] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
 
-  const handleChange = (event) => {
+  const handleCheckbox = (event) => {
     setChecked(event.target.checked);
   };
+
+  const handleInputChange = (event) =>{
+    const value = event.target.value;
+    const id = event.target.id;
+
+    if(id == "email"){
+      setUsername(value)
+    }
+    else{
+      setPassword(value)
+    }
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    try {
+      const user = await loginService.login({
+        username,
+        password,
+        role: "string"
+      });
+
+      setUser(user);
+      setUsername("");
+      setPassword("");
+      console.log(user)
+    } catch (e) {
+      console.log("error message: error on login")
+    }
+  }
 
   return (
     <CenteredContainer>
@@ -121,22 +157,24 @@ function LoginForm() {
           >
             Please enter your credentials to log in
           </Typography>
-          <form>
+          <form onSubmit={handleLogin}>
             <Box>
-              <CTextField
+              <CTextField onChange={handleInputChange}
                 id="email"
                 type="email"
                 label="email"
                 variant="outlined"
                 placeholder="example@domain.com"
+                value={username}
               />
-              <CTextField
+              <CTextField onChange={handleInputChange}
                 id="password"
                 type="password"
                 label="Password"
                 variant="outlined"
                 placeholder="Enter your password"
                 sx={{ marginTop: "1.5rem" }}
+                value={password}
               />
               <Box sx={{ display: "inline-flex" }}>
                 <FormControlLabel
@@ -144,7 +182,7 @@ function LoginForm() {
                   control={
                     <Checkbox
                       checked={checked}
-                      onChange={handleChange}
+                      onChange={handleCheckbox}
                       color="primary" // Color del checkbox
                     />
                   }
@@ -168,8 +206,7 @@ function LoginForm() {
               </CustomButton>
             </Box>
           </form>
-          <Box sx={{ mt: 2,
-          mt: "10rem" }}>
+          <Box sx={{ mt: 2, mt: "10rem" }}>
             <Typography variant="body2" color="textSecondary" align="center">
               Developed by Andrés Uribe.
             </Typography>
