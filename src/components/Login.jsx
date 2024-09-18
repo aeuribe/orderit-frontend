@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../styles/login.css";
 import iconLogo from "../assets/logo.png";
 import loginService from "../services/login.js";
-import { jwtDecode } from 'jwt-decode'
+import decodeService from "../services/decodeToken.js";
 import {
   Button,
   TextField,
@@ -115,11 +115,13 @@ function LoginForm() {
         password,
         role: "string"
       });
+      console.log(user);
 
+      const response = decodeService.decodeToken(user);
       setUser(user);
       setUsername("");
       setPassword("");
-      console.log(user)
+      console.log(response);
     } catch (e) {
       console.log("error message: error on login")
     }
