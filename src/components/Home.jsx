@@ -9,9 +9,10 @@ import StoreIcon from "@mui/icons-material/Store";
 import LogoutIcon from "@mui/icons-material/Logout";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import OrdersList from "./Orders/Orders.jsx";
-import StoreList from "./Stores/Stores.jsx"
-import ProductsList from "./Products/Products.jsx"
+import StoreList from "./Stores/Stores.jsx";
+import ProductsList from "./Products/Products.jsx";
 import iconLogo from "../assets/logo.png";
+import decodeService from "../services/decodeToken.js";
 
 const NAVIGATION = [
   {
@@ -37,20 +38,20 @@ const NAVIGATION = [
     kind: "divider",
   },
   {
-    segment: "logout", // Cambiamos el `kind` a `segment`
+    segment: "logout",
     title: "Log Out",
-    icon: <LogoutIcon />
-  }
+    icon: <LogoutIcon />,
+  },
 ];
 
 const themeOptions = {
   palette: {
     mode: 'light',
     primary: {
-      main: '#3A3ABF', // A vibrant purple
+      main: '#3A3ABF',
     },
     secondary: {
-      main: '#f50057', // A bright pink
+      main: '#f50057',
     },
   },
 };
@@ -72,20 +73,6 @@ const demoTheme = createTheme({
   },
 });
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#6037e8',
-    },
-    secondary: {
-      main: '#f50057',
-    },
-  },
-});
-
-
-
 function DemoPageContent({ pathname }) {
   return (
     <Box
@@ -106,34 +93,54 @@ export default function AppProviderBasic(props) {
   const { window } = props;
   const { isAuthenticated, setIsAuthenticated, ...rest } = props;
   const [pathname, setPathname] = React.useState("/orders");
+  const [userRole, setUserRole] = React.useState(null);
 
-  function handleLogout(){
+  React.useEffect(() => {
+    const token = localStorage.getItem('LoggedOrderItAppUser');
+    const storedUser = decodeService.decodeToken(token);
+    const role = storedUser["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+    
+    setUserRole(role);
+
+    console.log(role);
+
+  }, []);
+
+  function handleLogout() {
     setIsAuthenticated(false);
     localStorage.removeItem('LoggedOrderItAppUser');
   }
 
+  const filteredNavigation = React.useMemo(() => {
+    if (userRole === "ADMIN") {
+      return NAVIGATION;
+    } else if (userRole === "USER") {
+      return NAVIGATION.filter(
+        (item) => item.segment === "orders" || item.kind === "header" || item.kind === "divider" || item.segment === "logout"
+      );
+    }
+    return [];
+  }, [userRole]);
 
   const router = React.useMemo(() => {
     return {
       pathname,
       searchParams: new URLSearchParams(),
       navigate: (path) => {
-        // Only navigate if it's a path you want to allow
-        if (['/orders', '/products', '/stores','/logout'].includes(path)) {
+        if (filteredNavigation.some((item) => item.segment === path.replace("/", ""))) {
           if (path === '/logout') {
             handleLogout();
           } 
           setPathname(String(path));
         }
-        // Otherwise, do nothing
       },
     };
-  }, [pathname]);
+  }, [pathname, filteredNavigation]);
 
   const demoWindow = window !== undefined ? window() : undefined;
 
   const getTitle = (path) => {
-    const matchedRoute = NAVIGATION.find((route) => path.includes(route.segment));
+    const matchedRoute = filteredNavigation.find((route) => path.includes(route.segment));
     return matchedRoute ? matchedRoute.title : "Dashboard";
   };
 
@@ -155,9 +162,9 @@ export default function AppProviderBasic(props) {
       branding={{
         logo: "",
         title: getTitle(pathname),
-        color: "#333333"
+        color: "#333333",
       }}
-      navigation={NAVIGATION}
+      navigation={filteredNavigation}
       router={router}
       theme={demoTheme}
       window={demoWindow}

@@ -16,17 +16,17 @@ import {
   Button,
   Fab,
   Select,
-  MenuItem as MuiMenuItem, // Renombramos para evitar conflicto con MenuItem
+  MenuItem as MuiMenuItem,
   FormControl,
   InputLabel,
+  Snackbar,
 } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert"; // Icono de tres puntos
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
-import { getProducts, deleteProduct } from "../../services/productService.js"; // Importa deleteProduct
-import AddProductForm from "./AddProduct.jsx"; // Importa el formulario para agregar productos
-import EditProductForm from "./EditProduct.jsx"; // Importa el formulario para editar productos
+import { getProducts, deleteProduct } from "../../services/productService.js";
+import AddProductForm from "./AddProduct.jsx";
+import EditProductForm from "./EditProduct.jsx";
 
-// Lista de categorías por defecto (esto debería venir de tu API o estado global)
 const categories = [
   { id: 1, name: "Nail Enamels" },
   { id: 2, name: "ETERNAL ACETONE" },
@@ -36,7 +36,6 @@ const categories = [
   { id: 6, name: "GEL STEP 2" },
 ];
 
-// Lista de productos por defecto
 const defaultProducts = [
   {
     productId: 258,
@@ -50,25 +49,25 @@ const defaultProducts = [
 ];
 
 export default function Products() {
-  const [products, setProducts] = useState(defaultProducts); // Estado inicial de productos
-  const [filteredProducts, setFilteredProducts] = useState(defaultProducts); // Productos filtrados
+  const [products, setProducts] = useState(defaultProducts);
+  const [filteredProducts, setFilteredProducts] = useState(defaultProducts);
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentProductId, setCurrentProductId] = useState(null);
-  const [open, setOpen] = useState(false); // Estado para el diálogo de confirmación
-  const [error, setError] = useState(null); // Estado para manejar errores
-  const [addProductOpen, setAddProductOpen] = useState(false); // Estado para abrir el formulario de agregar productos
-  const [editProductOpen, setEditProductOpen] = useState(false); // Estado para abrir el formulario de editar productos
-  const [selectedProduct, setSelectedProduct] = useState(null); // Estado para almacenar el producto seleccionado para edición
-  const [selectedCategory, setSelectedCategory] = useState(""); // Estado para la categoría seleccionada
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [addProductOpen, setAddProductOpen] = useState(false);
+  const [editProductOpen, setEditProductOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  // Lógica para obtener productos al cargar el componente
   const fetchProducts = async () => {
     try {
       const productsData = await getProducts();
-      setProducts(productsData); // Actualiza los productos
-      setFilteredProducts(productsData); // También establece los productos filtrados
+      setProducts(productsData);
+      setFilteredProducts(productsData);
     } catch (error) {
-      setError(error.message); // Maneja errores
+      setError(error.message);
     }
   };
 
@@ -76,67 +75,69 @@ export default function Products() {
     fetchProducts();
   }, []);
 
-  // Maneja el cambio de categoría
   const handleCategoryChange = (event) => {
     const categoryId = event.target.value;
     setSelectedCategory(categoryId);
-    // Filtra productos según la categoría seleccionada
-    const filtered = products.filter(product => product.category.categoryId === categoryId);
+    const filtered = products.filter(
+      (product) => product.category.categoryId === categoryId
+    );
     setFilteredProducts(filtered);
   };
 
   const handleClickMenu = (event, product) => {
     setCurrentProductId(product.productId);
     setSelectedProduct(product);
-    setAnchorEl(event.currentTarget); // Abre el menú al hacer clic en los tres puntos
+    setAnchorEl(event.currentTarget);
   };
 
   const handleCloseMenu = () => {
-    setAnchorEl(null); // Cierra el menú
+    setAnchorEl(null);
   };
 
   const handleDeleteClick = () => {
-    setOpen(true); // Abre el diálogo de confirmación
-    handleCloseMenu(); // Cierra el menú
+    setOpen(true);
+    handleCloseMenu();
   };
 
   const handleCloseDialog = () => {
-    setOpen(false); // Cierra el diálogo de confirmación
+    setOpen(false);
   };
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteProduct(currentProductId); // Elimina el producto usando el servicio
-      setProducts(products.filter(product => product.productId !== currentProductId)); // Filtra el producto eliminado de la lista
-      setOpen(false); // Cierra el diálogo de confirmación
+      await deleteProduct(currentProductId);
+      setProducts(products.filter((product) => product.productId !== currentProductId));
+      setFilteredProducts(filteredProducts.filter((product) => product.productId !== currentProductId));
+      setOpen(false);
+      setOpenSnackbar(true); // Muestra el snackbar de éxito
     } catch (error) {
-      setError(error.message); // Maneja errores de la eliminación
-      setOpen(false); // Cierra el diálogo aunque haya un error
+      setError(error.message);
+      setOpen(false);
     }
   };
 
   const handleAddProduct = () => {
-    setSelectedProduct(null); // Resetea el producto seleccionado para añadir
-    setAddProductOpen(true); // Abre el formulario de agregar productos
+    setSelectedProduct(null);
+    setAddProductOpen(true);
   };
 
   const handleEditProduct = () => {
-    setEditProductOpen(true); // Abre el formulario de editar productos
-    handleCloseMenu(); // Cierra el menú
+    setEditProductOpen(true);
+    handleCloseMenu();
   };
 
   const handleCloseAddProductForm = () => {
-    setAddProductOpen(false); // Cierra el formulario de agregar productos
-    fetchProducts(); // Vuelve a cargar la lista de productos
+    setAddProductOpen(false);
+    fetchProducts();
   };
 
   const handleCloseEditProductForm = () => {
-    setEditProductOpen(false); // Cierra el formulario de editar productos
-    fetchProducts(); // Vuelve a cargar la lista de productos
+    setEditProductOpen(false);
+    fetchProducts();
   };
 
   if (error) {
-    return <div>Error: {error}</div>; // Muestra el error si lo hay
+    return <div>Error: {error}</div>;
   }
 
   return (
@@ -145,7 +146,6 @@ export default function Products() {
         Products List
       </Typography>
 
-      {/* Selector de Categoría */}
       <FormControl fullWidth variant="outlined" sx={{ marginBottom: 2 }}>
         <InputLabel>Category</InputLabel>
         <Select
@@ -164,7 +164,6 @@ export default function Products() {
         </Select>
       </FormControl>
 
-      {/* Lista de productos filtrados */}
       <List>
         {filteredProducts.map((product) => (
           <ListItem
@@ -190,21 +189,12 @@ export default function Products() {
         ))}
       </List>
 
-      {/* Menú desplegable para Modificar y Eliminar */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
         <MenuItem onClick={handleEditProduct}>Edit</MenuItem>
         <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
       </Menu>
 
-      {/* Diálogo de Confirmación para Eliminar */}
-      <Dialog
-        open={open}
-        onClose={handleCloseDialog}
-      >
+      <Dialog open={open} onClose={handleCloseDialog}>
         <DialogTitle>Delete Product</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -221,31 +211,23 @@ export default function Products() {
         </DialogActions>
       </Dialog>
 
-      {/* Formulario para Agregar Producto */}
       <Dialog open={addProductOpen} onClose={handleCloseAddProductForm}>
         <DialogTitle>Add New Product</DialogTitle>
         <DialogContent>
-          <AddProductForm 
-            onClose={handleCloseAddProductForm} 
-          />
+          <AddProductForm onClose={handleCloseAddProductForm} />
         </DialogContent>
       </Dialog>
 
-      {/* Formulario para Editar Producto */}
       <Dialog open={editProductOpen} onClose={handleCloseEditProductForm}>
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>
-          <EditProductForm 
-            product={selectedProduct} 
-            onClose={handleCloseEditProductForm} 
-          />
+          <EditProductForm product={selectedProduct} onClose={handleCloseEditProductForm} />
         </DialogContent>
       </Dialog>
 
-      {/* Botón para Agregar Producto */}
-      <Fab 
-        color="primary" 
-        aria-label="add" 
+      <Fab
+        color="primary"
+        aria-label="add"
         onClick={handleAddProduct}
         sx={{
           position: "absolute",
@@ -255,6 +237,14 @@ export default function Products() {
       >
         <AddIcon />
       </Fab>
+
+      {/* Snackbar para el mensaje de éxito */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={4000}
+        onClose={() => setOpenSnackbar(false)}
+        message="Producto eliminado satisfactoriamente"
+      />
     </Box>
   );
 }
