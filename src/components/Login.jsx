@@ -3,6 +3,7 @@ import "../styles/login.css";
 import iconLogo from "../assets/logo.png";
 import loginService from "../services/login.js";
 import decodeService from "../services/decodeToken.js";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   TextField,
@@ -14,6 +15,7 @@ import {
   Link,
   Checkbox,
   FormControlLabel,
+  Alert,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -84,27 +86,27 @@ const CustomLink = styled(Link)({
   },
 });
 
-function LoginForm() {
+function LoginForm({ onLogin }) {
   const [checked, setChecked] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
+  const [loginError, setLoginError] = useState(false);
 
   const handleCheckbox = (event) => {
     setChecked(event.target.checked);
   };
 
-  const handleInputChange = (event) =>{
+  const handleInputChange = (event) => {
     const value = event.target.value;
     const id = event.target.id;
 
-    if(id == "email"){
-      setUsername(value)
+    if (id == "email") {
+      setUsername(value);
+    } else {
+      setPassword(value);
     }
-    else{
-      setPassword(value)
-    }
-  }
+  };
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -113,17 +115,23 @@ function LoginForm() {
       const user = await loginService.login({
         username,
         password,
-        role: "string"
       });
-      console.log(user);
+
+      window.localStorage.setItem("LoggedOrderItAppUser", JSON.stringify(user));
 
       const response = decodeService.decodeToken(user);
+      console.log(response.SalespersonId);
       setUser(user);
       setUsername("");
       setPassword("");
-      console.log(response);
+
+      onLogin();
+      console.log(response)
     } catch (e) {
-      console.log("error message: error on login")
+      if (e.response && e.response.status === 400) {
+        setLoginError(true);
+      }
+      console.log("error message: error on login: " + e);
     }
   }
 
@@ -131,6 +139,11 @@ function LoginForm() {
     <CenteredContainer>
       <CCard>
         <CenteredCardContent>
+          {loginError && (
+            <Alert severity="error" onClose={() => setLoginError(false)}>
+              Incorrect credentials. Please try again.
+            </Alert>
+          )}
           <Box
             sx={{
               display: "flex",
@@ -161,7 +174,8 @@ function LoginForm() {
           </Typography>
           <form onSubmit={handleLogin}>
             <Box>
-              <CTextField onChange={handleInputChange}
+              <CTextField
+                onChange={handleInputChange}
                 id="email"
                 type="email"
                 label="email"
@@ -169,7 +183,8 @@ function LoginForm() {
                 placeholder="example@domain.com"
                 value={username}
               />
-              <CTextField onChange={handleInputChange}
+              <CTextField
+                onChange={handleInputChange}
                 id="password"
                 type="password"
                 label="Password"
